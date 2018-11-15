@@ -59,23 +59,5 @@ namespace AurosAutoPause.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        /// </summary>
-        internal static System.IO.UnmanagedMemoryStream fps {
-            get {
-                return ResourceManager.GetStream("fps", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        /// </summary>
-        internal static System.IO.UnmanagedMemoryStream tracking {
-            get {
-                return ResourceManager.GetStream("tracking", resourceCulture);
-            }
-        }
     }
 }

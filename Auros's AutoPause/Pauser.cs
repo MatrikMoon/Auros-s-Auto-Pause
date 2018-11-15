@@ -8,149 +8,129 @@ namespace AurosAutoPause
 {
     public class Pauser : MonoBehaviour
     {
-        public static float threshold = 40.0f;
-        public static bool yeet = false;
-        public static float period = 0.1f;
-        public static bool despa = true;
-        public static bool IWantJackBaron = true;
-        public static bool yote = false;
+        public float threshold = 40.0f;
+        public bool fpsCheckerEnabled = false;
+        public float period = 0.1f;
+        public bool pluginEnabled = false;
 
-        PlayerController _HEL;
-        PlayerController HEL
+        PlayerController _playerController;
+        PlayerController PlayerController
         {
             get
             {
-                if (_HEL == null)
-                    _HEL = Resources.FindObjectsOfTypeAll<PlayerController>().FirstOrDefault();
+                if (_playerController == null)
+                    _playerController = Resources.FindObjectsOfTypeAll<PlayerController>().FirstOrDefault();
 
-                return _HEL;
+                return _playerController;
             }
         }
 
-        GamePauseManager _GMM;
-        GamePauseManager GMM
+        GamePauseManager _gamePauseManager;
+        GamePauseManager GamePauseManager
         {
             get
             {
-                if (_GMM == null)
-                    _GMM = Resources.FindObjectsOfTypeAll<GamePauseManager>().FirstOrDefault();
+                if (_gamePauseManager == null)
+                    _gamePauseManager = Resources.FindObjectsOfTypeAll<GamePauseManager>().FirstOrDefault();
 
-                return _GMM;
+                return _gamePauseManager;
             }
         }
 
-        GameplayManager _PMM;
-        GameplayManager PMM
+        GameplayManager _gameplayManager;
+        GameplayManager GameplayManager
         {
             get
             {
-                if (_PMM == null)
-                    _PMM = Resources.FindObjectsOfTypeAll<GameplayManager>().FirstOrDefault();
+                if (_gameplayManager == null)
+                    _gameplayManager = Resources.FindObjectsOfTypeAll<GameplayManager>().FirstOrDefault();
 
-                return _PMM;
+                return _gameplayManager;
             }
         }
 
-        IEnumerator Girlfriend()
+        IEnumerator WaitForStart()
         {
-            yield return new WaitForSeconds(2f);
-            yote = true;
-        }
-
-
-        public void Awake()
-        {
-            despa = ModPrefs.GetBool(name, "Enabled", despa, true);
-            threshold = ModPrefs.GetFloat(name, "FPSThreshold", threshold, true);
-            yeet = ModPrefs.GetBool(name, "FPSCheckerOn", yeet, true);
-            period = ModPrefs.GetFloat(name, "ResponseTime", period, true);
-
-            _HEL = null;
-            _GMM = null;
-            _PMM = null;
+            System.Console.WriteLine("[AutoPause] Waiting for Managers to be available");
+            yield return new WaitUntil(() => GamePauseManager != null && PlayerController != null && GameplayManager != null);
+            pluginEnabled = ModPrefs.GetBool(name, "Enabled", pluginEnabled, true);
         }
 
         public void Start()
         {
-            StartCoroutine(Girlfriend());
+            threshold = ModPrefs.GetFloat(name, "FPSThreshold", threshold, true);
+            fpsCheckerEnabled = ModPrefs.GetBool(name, "FPSCheckerOn", fpsCheckerEnabled, true);
+            period = ModPrefs.GetFloat(name, "ResponseTime", period, true);
+            StartCoroutine(WaitForStart());
         }
 
         private float nextActionTime = 0.0f;
 
         //Previous Saber and FPS Values
         private static Vector3 PreviousLeftSaberHandleLocation;
-        private static Vector3 PreviousLeftSaberHandleLocation2;
+        private static Vector3 PreviousRightSaberHandleLocation;
         private static float despacito;
 
         public void Update()
         {
-
             //Slowing The Repeat Thing
-            if (Time.time > nextActionTime && despa == true && Plugin.yote == true)
+            if (Time.time > nextActionTime && pluginEnabled)
+            {
+                nextActionTime += period;
+
+                //Finding Saber Location
+                Saber SaberThatIsLeft = PlayerController.leftSaber;
+                Saber SaberThatIsRight = PlayerController.rightSaber;
+                Vector3 LeftSaberHandleLocation = SaberThatIsLeft.handlePos;
+                Vector3 RightSaberHandleLocation = SaberThatIsRight.handlePos;
+
+
+                //When the game is paused, saber position freezes. This if statement is to make sure that when the game is unpaused, it doesn't take the value which set off the tracking issue in the first place (if that makes any sense)
+                if (GamePauseManager != null && GamePauseManager.pause == true)
                 {
-                    nextActionTime += period;
-
-                    //Finding Saber Location
-                    if (HEL == null)
-                        return;
-                    Saber SaberThatIsLeft = HEL.leftSaber;
-                    Saber SaberThatIsRight = HEL.rightSaber;
-                    Vector3 LeftSaberHandleLocation = SaberThatIsLeft.handlePos;
-                    Vector3 RightSaberHandleLocation = SaberThatIsRight.handlePos;
-
-
-                    //When the game is paused, saber position freezes. This if statement is to make sure that when the game is unpaused, it doesn't take the value which set off the tracking issue in the first place (if that makes any sense)
-                    if (GMM != null && GMM.pause == true)
-                    {
-                        PreviousLeftSaberHandleLocation = RightSaberHandleLocation;
-                        PreviousLeftSaberHandleLocation2 = LeftSaberHandleLocation;
-                    }
-                    else
-                    {
-                        //FPS CHECKER
-                        float fps = 1.0f / Time.deltaTime;
-
-                        if (fps < threshold && fps < despacito && yeet == true)
-                        {
-                            if (PMM != null)
-                            {
-                                PMM.Pause();
-                                SoundPlayer DickMe = new SoundPlayer(Properties.Resources.fps);
-                                DickMe.Play();
-                                System.Console.WriteLine("[AutoPause] FPS Checker Has Just Been Activated");
-                            }
-                        }
-
-                        //TRACKING DETECTOR
-                        if (PreviousLeftSaberHandleLocation == LeftSaberHandleLocation || PreviousLeftSaberHandleLocation2 == RightSaberHandleLocation)
-                        {
-                            if (PMM != null)
-                            {
-                                PMM.Pause();
-                                SoundPlayer ReaxtsNerfGun = new SoundPlayer(Properties.Resources.tracking);
-                                ReaxtsNerfGun.Play();
-                                System.Console.WriteLine("[AutoPause] Tracking Detector Has Just Been Activated");
-                        }
-                        }
-
-                        //Set Saber Locations To Previous Saber Location and do FPS value thing
-                        PreviousLeftSaberHandleLocation = LeftSaberHandleLocation;
-                        PreviousLeftSaberHandleLocation2 = RightSaberHandleLocation;
-                        despacito = fps;
-
-                        //SABER FLY AWAYYYYYYYYYYYYYY
-                        if (LeftSaberHandleLocation.x > 1.4 || LeftSaberHandleLocation.x < -1.4 || RightSaberHandleLocation.x > 1.4 || RightSaberHandleLocation.x < -1.4 || LeftSaberHandleLocation.z > 1.3 || LeftSaberHandleLocation.z < -1.3 || RightSaberHandleLocation.z > 1.3 || RightSaberHandleLocation.z < -1.3 || LeftSaberHandleLocation.y < -0.1f || RightSaberHandleLocation.y < -0.1f)
-                        {
-                            if (PMM != null)
-                            {
-                                PMM.Pause();
-                                SoundPlayer ReaxtsNerfGun = new SoundPlayer(Properties.Resources.tracking);
-                                ReaxtsNerfGun.Play();
-                                System.Console.WriteLine("[AutoPause] Saber Fly Away Has Just Been Activated");
-                            }
-                        }
-                    }
+                    PreviousLeftSaberHandleLocation = RightSaberHandleLocation;
+                    PreviousRightSaberHandleLocation = LeftSaberHandleLocation;
                 }
+                else
+                {
+                    //FPS CHECKER
+                    float fps = 1.0f / Time.deltaTime;
+
+                    if (fps < threshold && fps < despacito && fpsCheckerEnabled == true)
+                    {
+                        if (GameplayManager != null)
+                        {
+                            GameplayManager.Pause();
+                            System.Console.WriteLine("[AutoPause] FPS Checker Has Just Been Activated");
+                        }
+                    }
+
+                    //TRACKING DETECTOR
+                    if (PreviousLeftSaberHandleLocation == LeftSaberHandleLocation || PreviousRightSaberHandleLocation == RightSaberHandleLocation)
+                    {
+                        if (GameplayManager != null)
+                        {
+                            GameplayManager.Pause();
+                            System.Console.WriteLine("[AutoPause] Tracking Detector Has Just Been Activated");
+                        }
+                    }
+
+                    //SABER FLY AWAYYYYYYYYYYYYYY
+                    if (LeftSaberHandleLocation.x > 1.4 || LeftSaberHandleLocation.x < -1.4 || RightSaberHandleLocation.x > 1.4 || RightSaberHandleLocation.x < -1.4 || LeftSaberHandleLocation.z > 1.3 || LeftSaberHandleLocation.z < -1.3 || RightSaberHandleLocation.z > 1.3 || RightSaberHandleLocation.z < -1.3 || LeftSaberHandleLocation.y < -0.1f || RightSaberHandleLocation.y < -0.1f)
+                    {
+                        if (GameplayManager != null)
+                        {
+                            GameplayManager.Pause();
+                            System.Console.WriteLine("[AutoPause] Saber Fly Away Has Just Been Activated");
+                        }
+                    }
+
+                    //Set Saber Locations To Previous Saber Location and do FPS value thing
+                    PreviousLeftSaberHandleLocation = LeftSaberHandleLocation;
+                    PreviousRightSaberHandleLocation = RightSaberHandleLocation;
+                    despacito = fps;
+                }
+            }
         }
     }
 }

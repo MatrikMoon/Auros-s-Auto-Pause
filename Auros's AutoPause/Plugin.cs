@@ -13,9 +13,6 @@ namespace AurosAutoPause
         public string Name => "Auros's AutoPause";
         public string Version => "1.4.0";
 
-        private readonly string[] env = { "DefaultEnvironment", "BigMirrorEnvironment", "TriangleEnvironment", "NiceEnvironment" };
-        public static bool yote = false;
-
         public void OnApplicationStart()
         {
             SceneManager.activeSceneChanged += SceneManagerOnActiveSceneChanged;
@@ -24,19 +21,16 @@ namespace AurosAutoPause
 
         void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
+            System.Console.WriteLine("[AutoPause] SCENE NAME: " + scene.name);
             if (scene.name == "Menu")
             {
                 PauseUI.CreateSettingsUI();
             }
-            yote = false;
-            new GameObject("Auros's AutoPause").AddComponent<Pauser>();
-           
+            else new GameObject("Auros's AutoPause").AddComponent<Pauser>();
         }
 
         private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
-            SharedCoroutineStarter.instance.StartCoroutine(DelayedYote());
-
         }
 
         public void OnApplicationQuit()
@@ -52,17 +46,13 @@ namespace AurosAutoPause
         public void OnUpdate()
         {
         }
+
         public void OnFixedUpdate()
         {
         }
-        private IEnumerator DelayedYote()
-        {
-            yield return new WaitForSeconds(1f);
-            yote = true;
-        }
-            public void OnLevelWasInitialized(int level)
-        {
-        }
 
+        public void OnLevelWasInitialized(int level)
+        {
+        }
     }
 }
